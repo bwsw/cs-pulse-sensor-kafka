@@ -50,6 +50,8 @@ Container supports next configuration parameters:
 
 ## Data structure
 
+All series are stored in InfluxDB compatible format. Just read them from Kafka and import into InfluxDB.
+
 Virtualization node series stored into kafka look like:
 
 ```
@@ -66,7 +68,8 @@ Virtualization node series stored into kafka look like:
         "measurement": "nodeInfo",
         "tags": {
             "vmHost": "qemu+ssh://root@10.252.1.33/system"
-        }
+        },
+        "time": "2018-08-17T09:00:35Z"
     }
 ]
 ```
@@ -85,7 +88,8 @@ Virtual machine series stored into kafka look like:
             "vmHost": "qemu+ssh://root@10.252.1.33/system",
             "vmId": "i-376-1733-VM",
             "vmUuid": "12805898-0fda-4fa6-9f18-fac64f673679"
-        }
+        },
+        "time": "2018-08-17T09:00:35Z"
     },
     {
         "fields": {
@@ -98,7 +102,8 @@ Virtual machine series stored into kafka look like:
             "vmHost": "qemu+ssh://root@10.252.1.33/system",
             "vmId": "i-376-1733-VM",
             "vmUuid": "12805898-0fda-4fa6-9f18-fac64f673679"
-        }
+        },
+        "time": "2018-08-17T09:00:35Z"
     },
     {
         "fields": {
@@ -117,7 +122,8 @@ Virtual machine series stored into kafka look like:
             "vmHost": "qemu+ssh://root@10.252.1.33/system",
             "vmId": "i-376-1733-VM",
             "vmUuid": "12805898-0fda-4fa6-9f18-fac64f673679"
-        }
+        },
+        "time": "2018-08-17T09:00:35Z"
     },
     {
         "fields": {
@@ -137,7 +143,8 @@ Virtual machine series stored into kafka look like:
             "vmHost": "qemu+ssh://root@10.252.1.33/system",
             "vmId": "i-376-1733-VM",
             "vmUuid": "12805898-0fda-4fa6-9f18-fac64f673679"
-        }
+        },
+        "time": "2018-08-17T09:00:35Z"
     }
 ]
 
