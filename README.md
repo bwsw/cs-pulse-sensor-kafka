@@ -1,4 +1,4 @@
-# CS-Umbrella / Pulse Plugin Sensor
+# Pulse Plugin Sensor (Kafka Edition)
 
 The purpose of the container is to monitor remote libvirt KVM hypervisor host and gather the information about VM resource usage. It is implemented in python2.7 with libvirt. It stores collected statistics to a kafka topic.
 
