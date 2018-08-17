@@ -9,6 +9,7 @@ import libvirt
 import json
 import os
 import traceback
+from datetime import datetime
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 from xml.etree import ElementTree
@@ -40,6 +41,8 @@ try:
 		raise Exception('Failed to get a list of domain IDs')
 		
 	for domainID in domainIDs:
+		current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
 		domain = conn.lookupByID(domainID)
 		#print [method for method in dir(domain) if callable(getattr(domain, method))]
 		#continue
@@ -115,10 +118,10 @@ try:
 			"vmUuid": vmHost["uuid"],
 			"vmHost": vmHost["host"],
 		}
-		
 		query = [
 			{
 				"measurement": "cpuTime",
+				"time": current_time,
 				"tags": tags,
 				"fields": {
 					"cpuTime": float(vmHost["cputime"]),
@@ -127,6 +130,7 @@ try:
 			},
 			{
 				"measurement": "rss",
+				"time": current_time,
 				"tags": tags,
 				"fields": {
 					"rss": long(vmHost["rss"]),
@@ -142,6 +146,7 @@ try:
 				
 			query.append({
 				"measurement": "networkInterface",
+				"time": current_time,
 				"tags": netTags,
 				"fields": vmHost["networkStatistics"][key]
 			})
@@ -153,6 +158,7 @@ try:
 			diskTags["pool"] = parts[-2]
 			query.append({
 				"measurement": "disk",
+				"time": current_time,
 				"tags": diskTags,
 				"fields": vmHost["diskStatistics"][path]
 			})
@@ -164,12 +170,14 @@ try:
 			print "\n"
 
 	if gatherHostStats == 'true':
+		current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 		query = []
 		stats = conn.getCPUStats(libvirt.VIR_NODE_CPU_STATS_ALL_CPUS)
 		nodeinfo = conn.getInfo()
 		mem = conn.getFreeMemory()
 		query.append({
 			"measurement": "nodeInfo",
+			"time": current_time,
 			"tags": { 'vmHost': csHost },
 			"fields": {
 				'kernel': long(stats['kernel']  / SEC),
