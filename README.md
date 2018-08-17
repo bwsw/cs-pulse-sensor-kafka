@@ -1,6 +1,6 @@
 # CS-Umbrella / Pulse Plugin Sensor
 
-The purpose of the container is to monitor remote libvirt KVM hypervisor host and gather the information about VM resource usage. It is implemented in python2.7 with libvirt. It stores collected statistics to the remote influxdb storage.
+The purpose of the container is to monitor remote libvirt KVM hypervisor host and gather the information about VM resource usage. It is implemented in python2.7 with libvirt. It stores collected statistics to a kafka topic.
 
 Currently it collects next metrics: 
  - Host: CPU statistics, RAM statistics
@@ -14,23 +14,27 @@ Features:
  Known to work with:
  - Apache Cloudstack 4.3 with KVM hypervisor and NFS primary storage
  - Apache Cloudstack 4.9 with KVM hypervisor and NFS primary storage
+ - Apache Cloudstack 4.11.1 with KVM hypervisor and local primary storage
 
 Usage:
 
 ```
-# docker pull bwsw/cs-pulse-sensor
-# docker run --restart=always -d --name 10.252.1.11 \
+# create topic
+docker run --rm -it wurstmeister/kafka:1.0.0 sh -c "JMX_PORT= /opt/kafka/bin/kafka-topics.sh --create --zookeeper zk1:2181 --replication-factor 3 --partitions 1 --topic kvm-metrics
+
+# deploy service
+docker run --restart=always -d --name 10.252.1.11 \
              -v /root/.ssh:/root/.ssh \
              -e PAUSE=10 \
-             -e INFLUX_HOST=influx \
-             -e INFLUX_PORT=8086 \
-             -e INFLUX_DB=puls \
-             -e INFLUX_USER=puls \
-             -e INFLUX_PASSWORD=secret \
+             -e KAFKA_BOOTSTRAP=host1:9092,host2:9092,host3:9092 \
+             -e KAFKA_TOPIC=kvm-metrics \
              -e GATHER_HOST_STATS=true
              -e DEBUG=true \
              -e KVM_HOST=qemu+ssh://root@10.252.1.11/system \
-             bwsw/cs-pulse-sensor
+             bwsw/cs-pulse-sensor-kafka
+
+# test it
+docker run --rm -it wurstmeister/kafka:1.0.0 sh -c "JMX_PORT= /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server host1:9092,host2:9092,host3:9092 --topic kvm-metrics --max-messages 1000 --from-beginning"
 ```
 
 ## Container Parameters
@@ -39,13 +43,14 @@ Container supports next configuration parameters:
 
 - KVM_HOST - fqdn for libvrt KVM connection line
 - PAUSE - interval between metering
-- INFLUX\_\* - information about influxdb access
+- KAFKA_BOOTSTRAP - comma separated list of kafka bootstrap servers
+- KAFKA_TOPIC - topic where to place data
 - GATHER_HOST_STATS - if to collect information about a hypervisor host
 - DEBUG - print or avoid JSON dumps inside docker container (useful for troubleshooting in attached mode)
 
-## InfluxDB structure
+## Data structure
 
-Virtualization node series stored into influxdb look like:
+Virtualization node series stored into kafka look like:
 
 ```
 [
@@ -66,7 +71,7 @@ Virtualization node series stored into influxdb look like:
 ]
 ```
 
-Virtual machine series stored into influxdb look like:
+Virtual machine series stored into kafka look like:
 
 ```
 [
@@ -137,13 +142,6 @@ Virtual machine series stored into influxdb look like:
 ]
 
 ```
-
-## Grafana dashboard
-
-![grafana dashboard](grafana_dashboard/screenshot01.png)
-
-* import [grafana_dashboard.json](grafana_dashboard/grafana_dashboard.json) into your grafana
-* adjust data source
 
 ## License
 
