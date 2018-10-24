@@ -8,20 +8,26 @@ ENV KAFKA_TOPIC kvm-metrics
 
 ENV PAUSE 20
 ENV GATHER_HOST_STATS true
-ENV DEBUG true
+ENV LOGLEVEL DEBUG
+
+ENV CS_ENDPOINT http://localhost/client/api
+ENV CS_API_KEY key
+ENV CS_SECRET_KEY secret
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -q python-libvirt python-pip openssh-client
-RUN pip install --upgrade pip
-RUN pip install kafka-python
 
 COPY ./src /opt
+COPY requirements.txt /opt
+
+RUN pip install --upgrade pip
+RUN pip install -r /opt/requirements.txt
+
 
 
 WORKDIR /opt
 
-CMD ["/bin/bash", "/opt/update-virt-hostinfo"]
+CMD ["/bin/bash", "/opt/virt-hostinfo.py"]
 
 
