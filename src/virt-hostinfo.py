@@ -59,9 +59,7 @@ def get_volumes(q):
         for vols in _iterate_over_projects():
             if len(vols) > 0:
                 for v in vols['volume']:
-                    if 'path' in v:
-                        logging.info("Volume path mapping found (id: path) = (%s, %s, %s)" %
-                                     (v['id'], v['path'], 'X' if v['id'] != v['path'] else 'O'))
+                    if 'path' in v and 'id' in v:
                         q.put({'path': v['path'], 'id': v['id']})
 
         time.sleep(float(volumes_update_interval))
@@ -71,6 +69,8 @@ def get_volume_uuid(path):
     try:
         while True:
             data = exchange_vols_q.get_nowait()
+            logging.debug("Volume path mapping added (id: path) = (%s, %s, %s)" %
+                          (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
             cache.put(data['path'], data['id'])
     except Empty:
         pass
