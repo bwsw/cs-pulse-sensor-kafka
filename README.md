@@ -28,8 +28,11 @@ docker run --restart=always -d --name 10.252.1.11 \
              -e PAUSE=10 \
              -e KAFKA_BOOTSTRAP=host1:9092,host2:9092,host3:9092 \
              -e KAFKA_TOPIC=kvm-metrics \
-             -e GATHER_HOST_STATS=true
-             -e DEBUG=true \
+             -e GATHER_HOST_STATS=true \
+             -e CS_ENDPOINT=https://server/client/api \
+             -e CS_API_KEY=secret \
+             -e CS_SECRET_KEY=secret \
+             -e LOGLEVEL=DEBUG \
              -e KVM_HOST=qemu+ssh://root@10.252.1.11/system \
              bwsw/cs-pulse-sensor-kafka
 
@@ -46,7 +49,10 @@ Container supports next configuration parameters:
 - KAFKA_BOOTSTRAP - comma separated list of kafka bootstrap servers
 - KAFKA_TOPIC - topic where to place data
 - GATHER_HOST_STATS - if to collect information about a hypervisor host
-- DEBUG - print or avoid JSON dumps inside docker container (useful for troubleshooting in attached mode)
+- LOGLEVEL - print or avoid JSON dumps inside docker container (useful for troubleshooting in attached mode)
+- CS_ENDPOINT - CloudStack API endpoint
+- CS_API_KEY - Cloudstack API key
+- CS_SECRET_KEY - CloudStack Secret key
 
 ## Data structure
 

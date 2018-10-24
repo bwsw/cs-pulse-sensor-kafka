@@ -4,9 +4,13 @@ export KVM_HOST='qemu+ssh://root@10.252.2.10/system'
 export KAFKA_BOOTSTRAP=10.252.2.4:9092,10.252.2.3:9092,10.252.2.2:9092
 export KAFKA_TOPIC=kvm-metrics
 export GATHER_HOST_STATS=true
-export DEBUG=true
+export LOGLEVEL=DEBUG
 
-../src/virt-hostinfo
+export CS_ENDPOINT=http://localhost/client/api
+export CS_API_KEY=key
+export CS_SECRET_KEY=secret
+
+../src/virt-hostinfo.py
 
 
 
