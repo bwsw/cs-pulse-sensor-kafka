@@ -24,15 +24,25 @@ GB = 1024 * MB
 SEC = 1000000000.
 
 
-def get_projects(cs):
-    projects = cs.listProjects(listall=True, filter='id')
-    if len(projects) > 0:
-        return [rec['id'] for rec in projects['project']]
-    else:
-        return []
-
-
 def get_volumes(q):
+    def _get_projects(cs):
+        projects = cs.listProjects(listall=True, filter='id')
+        if len(projects) > 0:
+            return [rec['id'] for rec in projects['project']]
+        else:
+            return []
+
+    def _iterate_over_projects():
+        logging.debug("Volumes listing in main scope")
+        vols = cs.listVolumes(listall=True, filter='path,id')
+        logging.debug(json.dumps(vols))
+        yield vols
+        for p in _get_projects(cs):
+            logging.debug("Volumes listing for project = %s" % p)
+            vols = cs.listVolumes(listall=True, filter='path,id', projectid=p)
+            logging.debug(json.dumps(vols))
+            yield vols
+
     cs_endpoint = os.environ['CS_ENDPOINT']
     cs_api_key = os.environ['CS_API_KEY']
     cs_secret_key = os.environ['CS_SECRET_KEY']
@@ -41,17 +51,6 @@ def get_volumes(q):
     cs = CloudStack(endpoint=cs_endpoint,
                     key=cs_api_key,
                     secret=cs_secret_key)
-
-    def _iterate_over_projects():
-        logging.debug("Volumes listing in main scope")
-        vols = cs.listVolumes(listall=True, filter='path,id')
-        logging.debug(json.dumps(vols))
-        yield vols
-        for p in get_projects(cs):
-            logging.debug("Volumes listing for project = %s" % p)
-            vols = cs.listVolumes(listall=True, filter='path,id', projectid=p)
-            logging.debug(json.dumps(vols))
-            yield vols
 
     while True:
         for vols in _iterate_over_projects():
