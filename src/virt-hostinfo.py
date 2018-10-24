@@ -246,7 +246,6 @@ if __name__ == '__main__':
                 for path in vm_host["diskStatistics"].keys():
                     parts = path.split('/')
                     disk_tags = tags.copy()
-                    disk_tags['image-path'] = parts[-1]
                     disk_tags['image'] = get_volume_uuid(parts[-1])
                     disk_tags['pool'] = parts[-2]
                     query.append({
