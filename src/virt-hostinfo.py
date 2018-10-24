@@ -67,11 +67,11 @@ def get_volume_uuid(vmuuid, path):
         if len(vols) > 0:
             for v in vols['volume']:
                 if v['path'] == path:
-                    logging.debug("Volume path mapping found (id: path) = (%s, %s)" % (v['id'], path))
+                    logging.info("Volume path mapping found (id: path) = (%s, %s)" % (v['id'], path))
                     return v['id']
-            logging.debug("Volume path mapping not found for path = %s" % path)
+            logging.info("Volume path mapping not found for path = %s" % path)
             return path
-    logging.debug("Volume path mapping not found for path = %s" % path)
+    logging.info("Volume path mapping not found for path = %s" % path)
     return path
 
 
