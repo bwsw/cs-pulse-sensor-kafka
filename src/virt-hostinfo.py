@@ -50,7 +50,7 @@ def get_projects():
     else:
         return []
 
-@lru_cache(timeout=60, maxsize=100000)
+@lru_cache(timeout=3600, maxsize=100000)
 def get_volume_uuid(vmuuid, path):
     def _iterate_over_projects():
         logging.debug("Volumes listing for VM %s in main scope" % vmuuid)
