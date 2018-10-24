@@ -4,20 +4,20 @@
 
 import json
 import libvirt
+import logging
 import os
 import sys
+import time
 import traceback
-import logging
 from Queue import Empty
 from datetime import datetime
-import time
-from xml.etree import ElementTree
-from cs import CloudStack
-from repoze.lru import LRUCache
-from multiprocessing import Queue
 from multiprocessing import Process
+from multiprocessing import Queue
+from xml.etree import ElementTree
 
+from cs import CloudStack
 from kafka import KafkaProducer
+from repoze.lru import LRUCache
 
 MB = 1024 * 1024
 GB = 1024 * MB
@@ -33,7 +33,6 @@ def get_projects(cs):
 
 
 def get_volumes(q):
-
     cs_endpoint = os.environ['CS_ENDPOINT']
     cs_api_key = os.environ['CS_API_KEY']
     cs_secret_key = os.environ['CS_SECRET_KEY']
@@ -55,7 +54,6 @@ def get_volumes(q):
             yield vols
 
     while True:
-        projects = get_projects(cs)
         for vols in _iterate_over_projects():
             if len(vols) > 0:
                 for v in vols['volume']:
@@ -70,11 +68,11 @@ def get_volume_uuid(path):
         while True:
             data = exchange_vols_q.get_nowait()
             logging.info("Volume path mapping added (id: path) = (%s, %s, %s)" %
-                          (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
+                         (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
             cache.put(data['path'], data['id'])
     except Empty:
         pass
-    return cache.get(path,path)
+    return cache.get(path, path)
 
 
 if __name__ == '__main__':
