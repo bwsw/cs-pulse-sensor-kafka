@@ -56,13 +56,14 @@ def get_volumes(q):
 
     while True:
         projects = get_projects(cs)
-        time.sleep(volumes_update_interval)
         for vols in _iterate_over_projects():
             if len(vols) > 0:
                 for v in vols['volume']:
                     logging.info("Volume path mapping found (id: path) = (%s, %s, %s)" %
                                  (v['id'], v['path'], 'X' if v['id'] != v['path'] else 'O'))
                     q.put({'path': v['path'], 'id': v['id']})
+
+        time.sleep(float(volumes_update_interval))
 
 
 def get_volume_uuid(path):
