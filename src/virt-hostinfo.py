@@ -240,7 +240,7 @@ while True:
 
             producer.send(kafka_topic, query)
 
-            logging.debug(json.dumps(query, sort_keys=True, indent=4, separators=(',', ': ')))
+            # logging.debug(json.dumps(query, sort_keys=True, indent=4, separators=(',', ': ')))
 
         producer.flush()
 
