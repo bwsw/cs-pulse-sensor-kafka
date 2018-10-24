@@ -33,6 +33,11 @@ def get_projects(cs):
 
 
 def get_volumes(q):
+
+    cs_endpoint = os.environ['CS_ENDPOINT']
+    cs_api_key = os.environ['CS_API_KEY']
+    cs_secret_key = os.environ['CS_SECRET_KEY']
+
     cs = CloudStack(endpoint=cs_endpoint,
                     key=cs_api_key,
                     secret=cs_secret_key)
@@ -81,10 +86,6 @@ if __name__ == '__main__':
     kafka_bootstrap_servers = os.environ["KAFKA_BOOTSTRAP"]
     kafka_topic = os.environ["KAFKA_TOPIC"]
     gather_host_stats = os.environ["GATHER_HOST_STATS"]
-
-    cs_endpoint = os.environ['CS_ENDPOINT']
-    cs_api_key = os.environ['CS_API_KEY']
-    cs_secret_key = os.environ['CS_SECRET_KEY']
 
     loglevel = os.environ["LOGLEVEL"]
 
