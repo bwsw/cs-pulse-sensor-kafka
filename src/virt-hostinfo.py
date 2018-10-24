@@ -51,7 +51,7 @@ def get_projects():
         return []
 
 @lru_cache(timeout=3600, maxsize=100000)
-def get_volume_uuid(vmuuid, path):
+def get_volume_uuid(vmname, vmuuid, path):
     def _iterate_over_projects():
         logging.debug("Volumes listing for VM %s in main scope" % vmuuid)
         vols = cs.listVolumes(listall=True, filter='path,id', virtualmachineid=vmuuid)
@@ -67,11 +67,11 @@ def get_volume_uuid(vmuuid, path):
         if len(vols) > 0:
             for v in vols['volume']:
                 if v['path'] == path:
-                    logging.info("Volume path mapping found (id: path) = (%s, %s)" % (v['id'], path))
+                    logging.info("Volume path for VM %s mapping found (id: path) = (%s, %s, %s)" % (vmname, v['id'], path, 'X' if v['id'] != path else 'O'))
                     return v['id']
-            logging.info("Volume path mapping not found for path = %s" % path)
+            logging.info("Volume path for VM %s mapping not found for path = %s" % (vmname, path))
             return path
-    logging.info("Volume path mapping not found for path = %s" % path)
+    logging.info("Volume path for VM %s mapping not found for path = %s" % (vmname, path))
     return path
 
 
@@ -200,7 +200,7 @@ while True:
                 parts = path.split('/')
                 disk_tags = tags.copy()
                 disk_tags['image-path'] = parts[-1]
-                disk_tags['image'] = get_volume_uuid(vm_host['uuid'], parts[-1])
+                disk_tags['image'] = get_volume_uuid(vm_host["name"], vm_host['uuid'], parts[-1])
                 disk_tags['pool'] = parts[-2]
                 query.append({
                     "measurement": "disk",
