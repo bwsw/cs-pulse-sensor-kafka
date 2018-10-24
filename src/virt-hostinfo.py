@@ -98,6 +98,8 @@ if __name__ == '__main__':
     loglevel = os.environ["LOGLEVEL"]
     volumes_update_interval = os.environ['VOLUMES_UPDATE_INTERVAL']
 
+    pause_time = os.environ['PAUSE']
+
     FORMAT = '%(asctime)-15s %(message)s'
     logging.basicConfig(format=FORMAT, stream=sys.stderr, level=getattr(logging, loglevel))
 
@@ -282,6 +284,7 @@ if __name__ == '__main__':
             producer.flush()
 
             conn.close()
+            time.time(int(pause_time))
 
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
