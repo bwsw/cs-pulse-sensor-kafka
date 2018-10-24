@@ -45,8 +45,10 @@ cs = CloudStack(endpoint=cs_endpoint,
 @lru_cache(timeout=60, maxsize=100)
 def get_projects():
     projects = cs.listProjects(listall=True, filter='id')
-    return [rec['id'] for rec in projects['project']]
-
+    if len(projects) > 0:
+        return [rec['id'] for rec in projects['project']]
+    else:
+        return []
 
 @lru_cache(timeout=60, maxsize=100000)
 def get_volume_uuid(vmuuid, path):
@@ -62,7 +64,7 @@ def get_volume_uuid(vmuuid, path):
             yield vols
 
     for vols in _iterate_over_projects():
-        if vols['count'] > 0:
+        if len(vols) > 0:
             for v in vols['volume']:
                 if v['path'] == path:
                     logging.debug("Volume path mapping found (id: path) = (%s, %s)" % (v['id'], path))
