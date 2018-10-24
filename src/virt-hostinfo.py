@@ -37,6 +37,7 @@ def get_volumes(q):
     cs_endpoint = os.environ['CS_ENDPOINT']
     cs_api_key = os.environ['CS_API_KEY']
     cs_secret_key = os.environ['CS_SECRET_KEY']
+    volumes_update_interval = os.environ['VOLUMES_UPDATE_INTERVAL']
 
     cs = CloudStack(endpoint=cs_endpoint,
                     key=cs_api_key,
@@ -88,8 +89,6 @@ if __name__ == '__main__':
     gather_host_stats = os.environ["GATHER_HOST_STATS"]
 
     loglevel = os.environ["LOGLEVEL"]
-
-    volumes_update_interval = os.environ['VOLUMES_UPDATE_INTERVAL']
 
     FORMAT = '%(asctime)-15s %(message)s'
     logging.basicConfig(format=FORMAT, stream=sys.stderr, level=getattr(logging, loglevel))
