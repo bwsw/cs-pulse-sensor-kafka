@@ -82,6 +82,26 @@ while True:
             raise Exception("Failed to open connection to %s" % (kvm_host,))
             exit(1)
 
+        if gather_host_stats == 'true':
+            current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            query = []
+            stats = conn.getCPUStats(libvirt.VIR_NODE_CPU_STATS_ALL_CPUS)
+            nodeinfo = conn.getInfo()
+            mem = conn.getFreeMemory()
+            query.append({
+                "measurement": "nodeInfo",
+                "time": current_time,
+                "tags": {'vmHost': kvm_host},
+                "fields": {
+                    'kernel': long(stats['kernel'] / SEC),
+                    'idle': long(stats['idle'] / SEC),
+                    'user': long(stats['user'] / SEC),
+                    'iowait': long(stats['iowait'] / SEC),
+                    'totalMem': nodeinfo[1],
+                    'freeMem': long(mem / MB)
+                }
+            })
+
         domainIDs = conn.listDomainsID()
         if domainIDs == None:
             raise Exception('Failed to get a list of domain IDs')
@@ -94,6 +114,9 @@ while True:
             # continue
 
             tree = ElementTree.fromstring(domain.XMLDesc())
+
+            conn.close()
+
             vm_host = {}
             vm_host["host"] = kvm_host
             vm_host["name"] = domain.name()
@@ -215,33 +238,12 @@ while True:
                 print json.dumps(query, sort_keys=True, indent=4, separators=(',', ': '))
                 print "\n"
 
-        if gather_host_stats == 'true':
-            current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-            query = []
-            stats = conn.getCPUStats(libvirt.VIR_NODE_CPU_STATS_ALL_CPUS)
-            nodeinfo = conn.getInfo()
-            mem = conn.getFreeMemory()
-            query.append({
-                "measurement": "nodeInfo",
-                "time": current_time,
-                "tags": {'vmHost': kvm_host},
-                "fields": {
-                    'kernel': long(stats['kernel'] / SEC),
-                    'idle': long(stats['idle'] / SEC),
-                    'user': long(stats['user'] / SEC),
-                    'iowait': long(stats['iowait'] / SEC),
-                    'totalMem': nodeinfo[1],
-                    'freeMem': long(mem / MB)
-                }
-            })
-
             producer.send(kafka_topic, query)
 
             logging.debug(json.dumps(query, sort_keys=True, indent=4, separators=(',', ': ')))
 
         producer.flush()
 
-        conn.close()
 
     except Exception as e:
         traceback.print_exc(file=sys.stderr)
