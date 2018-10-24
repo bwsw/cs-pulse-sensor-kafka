@@ -42,7 +42,6 @@ cs = CloudStack(endpoint=cs_endpoint,
                 secret=cs_secret_key)
 
 
-@lru_cache(timeout=60, maxsize=100)
 def get_projects():
     projects = cs.listProjects(listall=True, filter='id')
     if len(projects) > 0:
@@ -50,7 +49,7 @@ def get_projects():
     else:
         return []
 
-@lru_cache(timeout=3600, maxsize=100000)
+@lru_cache(timeout=600, maxsize=100000)
 def get_volume_uuid(vmname, vmuuid, path):
     def _iterate_over_projects():
         logging.debug("Volumes listing for VM %s in main scope" % vmuuid)
@@ -242,7 +241,7 @@ while True:
 
             producer.send(kafka_topic, query)
 
-            # logging.debug(json.dumps(query, sort_keys=True, indent=4, separators=(',', ': ')))
+            logging.debug(json.dumps(query, sort_keys=True, indent=4, separators=(',', ': ')))
 
         producer.flush()
 
