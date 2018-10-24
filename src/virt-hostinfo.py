@@ -59,16 +59,24 @@ def get_volumes(q):
                     if 'path' in v and 'id' in v:
                         q.put({'path': v['path'], 'id': v['id']})
 
-        time.sleep(float(volumes_update_interval))
+        minutes = int(int(volumes_update_interval)/60)
+        for i in range(0, minutes):
+            q.put({'ping': time.time()})
+            time.sleep(60)
 
 
 def get_volume_uuid(path):
+    global last_ping
     try:
         while True:
             data = exchange_vols_q.get_nowait()
             logging.info("Volume path mapping added (id: path) = (%s, %s, %s)" %
                          (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
-            cache.put(data['path'], data['id'])
+            if 'ping' in data:
+                logging.info("Volume Mapping Process send me keep-alive PING message at %s." % data['ping'])
+                last_ping = data['ping']
+            else:
+                cache.put(data['path'], data['id'])
     except Empty:
         pass
     return cache.get(path, path)
@@ -88,6 +96,7 @@ if __name__ == '__main__':
     gather_host_stats = os.environ["GATHER_HOST_STATS"]
 
     loglevel = os.environ["LOGLEVEL"]
+    volumes_update_interval = os.environ['VOLUMES_UPDATE_INTERVAL']
 
     FORMAT = '%(asctime)-15s %(message)s'
     logging.basicConfig(format=FORMAT, stream=sys.stderr, level=getattr(logging, loglevel))
@@ -96,7 +105,15 @@ if __name__ == '__main__':
                              value_serializer=lambda m: json.dumps(m).encode('ascii'),
                              retries=5)
 
+    last_ping = time.time()
+
     while True:
+
+        if last_ping < time.time() - int(volumes_update_interval):
+            logging.warn("Ping from Volume mapper process wasn't received for %s seconds. Restart the system." % volumes_update_interval)
+            p.terminate()
+            exit(1)
+
         try:
 
             conn = libvirt.open(kvm_host)
