@@ -13,6 +13,7 @@ ENV LOGLEVEL DEBUG
 ENV CS_ENDPOINT http://localhost/client/api
 ENV CS_API_KEY key
 ENV CS_SECRET_KEY secret
+ENV VOLUMES_UPDATE_INTERVAL 600
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive apt-get update

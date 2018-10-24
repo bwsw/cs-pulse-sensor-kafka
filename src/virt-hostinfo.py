@@ -8,10 +8,14 @@ import os
 import sys
 import traceback
 import logging
+from Queue import Empty
 from datetime import datetime
+import time
 from xml.etree import ElementTree
 from cs import CloudStack
-from repoze.lru import lru_cache
+from repoze.lru import LRUCache
+from multiprocessing import Queue
+from multiprocessing import Process
 
 from kafka import KafkaProducer
 
@@ -30,6 +34,9 @@ cs_secret_key = os.environ['CS_SECRET_KEY']
 
 loglevel = os.environ["LOGLEVEL"]
 
+volumes_update_interval = os.environ['VOLUMES_UPDATE_INTERVAL']
+
+
 FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, stream=sys.stderr, level=getattr(logging, loglevel))
 
@@ -37,43 +44,52 @@ producer = KafkaProducer(bootstrap_servers=kafka_bootstrap_servers.split(","),
                          value_serializer=lambda m: json.dumps(m).encode('ascii'),
                          retries=5)
 
-cs = CloudStack(endpoint=cs_endpoint,
-                key=cs_api_key,
-                secret=cs_secret_key)
 
-
-def get_projects():
+def get_projects(cs):
     projects = cs.listProjects(listall=True, filter='id')
     if len(projects) > 0:
         return [rec['id'] for rec in projects['project']]
     else:
         return []
 
-@lru_cache(timeout=600, maxsize=100000)
-def get_volume_uuid(vmname, vmuuid, path):
+exchange_vols_q = Queue()
+cache = LRUCache(size=100000)
+
+def get_volumes(q):
+    cs = CloudStack(endpoint=cs_endpoint,
+                    key=cs_api_key,
+                    secret=cs_secret_key)
+
     def _iterate_over_projects():
-        logging.debug("Volumes listing for VM %s in main scope" % vmuuid)
-        vols = cs.listVolumes(listall=True, filter='path,id', virtualmachineid=vmuuid)
+        logging.debug("Volumes listing in main scope")
+        vols = cs.listVolumes(listall=True, filter='path,id')
         logging.debug(json.dumps(vols))
         yield vols
-        for p in get_projects():
-            logging.debug("Volumes listing for VM %s for project = %s" % (vmuuid, p))
-            vols = cs.listVolumes(listall=True, filter='path,id', virtualmachineid=vmuuid, projectid=p)
+        for p in get_projects(cs):
+            logging.debug("Volumes listing for project = %s" % p)
+            vols = cs.listVolumes(listall=True, filter='path,id', projectid=p)
             logging.debug(json.dumps(vols))
             yield vols
 
-    for vols in _iterate_over_projects():
-        if len(vols) > 0:
-            for v in vols['volume']:
-                if v['path'] == path:
-                    logging.info("Volume path for VM %s mapping found (id: path) = (%s, %s, %s)" % (vmname, v['id'], path, 'X' if v['id'] != path else 'O'))
-                    return v['id']
-            logging.info("Volume path for VM %s mapping not found for path = %s" % (vmname, path))
-            return path
-    logging.info("Volume path for VM %s mapping not found for path = %s" % (vmname, path))
-    return path
+    while True:
+        projects = get_projects(cs)
+        time.sleep(volumes_update_interval)
+        for vols in _iterate_over_projects():
+            if len(vols) > 0:
+                for v in vols['volume']:
+                    logging.info("Volume path mapping found (id: path) = (%s, %s, %s)" %
+                                 (v['id'], v['path'], 'X' if v['id'] != v['path'] else 'O'))
+                    q.put({'path': v['path'], 'id': v['id']})
 
 
+def get_volume_uuid(path):
+    try:
+        while True:
+            data = exchange_vols_q.get_nowait()
+            cache.put(data['path'], data['id'])
+    except Empty:
+        pass
+    return cache.get(path,path)
 
 
 while True:
@@ -106,7 +122,7 @@ while True:
             })
 
         domainIDs = conn.listDomainsID()
-        if domainIDs == None:
+        if not domainIDs:
             raise Exception('Failed to get a list of domain IDs')
 
         for domainID in domainIDs:
@@ -224,7 +240,7 @@ while True:
                 parts = path.split('/')
                 disk_tags = tags.copy()
                 disk_tags['image-path'] = parts[-1]
-                disk_tags['image'] = get_volume_uuid(vm_host["name"], vm_host['uuid'], parts[-1])
+                disk_tags['image'] = get_volume_uuid(parts[-1])
                 disk_tags['pool'] = parts[-2]
                 query.append({
                     "measurement": "disk",
