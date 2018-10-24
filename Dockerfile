@@ -29,6 +29,6 @@ RUN pip install -r /opt/requirements.txt
 
 WORKDIR /opt
 
-CMD ["/bin/bash", "/opt/virt-hostinfo.py"]
+CMD ["/opt/virt-hostinfo.py"]
 
 
