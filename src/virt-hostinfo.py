@@ -70,12 +70,12 @@ def get_volume_uuid(path):
     try:
         while True:
             data = exchange_vols_q.get_nowait()
-            logging.info("Volume path mapping added (id: path) = (%s, %s, %s)" %
-                         (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
             if 'ping' in data:
                 logging.info("Volume Mapping Process send me keep-alive PING message at %s." % data['ping'])
                 last_ping = data['ping']
             else:
+                logging.info("Volume path mapping added (id: path) = (%s, %s, %s)" %
+                             (data['id'], data['path'], 'X' if data['id'] != data['path'] else 'O'))
                 cache.put(data['path'], data['id'])
     except Empty:
         pass
