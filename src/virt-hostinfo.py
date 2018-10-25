@@ -284,7 +284,7 @@ if __name__ == '__main__':
             producer.flush()
 
             conn.close()
-            time.time(int(pause_time))
+            time.sleep(int(pause_time))
 
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
