@@ -42,6 +42,7 @@ docker run --rm -it wurstmeister/kafka:1.0.0 sh -c "JMX_PORT= /opt/kafka/bin/kaf
 
 ## Container Parameters
 
+
 Container supports next configuration parameters:
 
 - KVM_HOST - fqdn for libvrt KVM connection line
